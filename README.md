@@ -86,20 +86,28 @@ src/
 
 ## GitHub Actions
 
-### CI ワークフロー
+### CI ワークフロー (`.github/workflows/ci.yml`)
 
-`.github/workflows/ci.yml` が以下を実行します:
+すべてのブランチで lint / typecheck / build を実行します。
 
-1. **Lint**: ESLint による静的解析
-2. **Type check**: TypeScript 型チェック
-3. **Build**: Next.js ビルド（静的エクスポート）
-4. **Artifact**: ビルド出力を GitHub Actions Artifact として保存
+- **トリガー**: `main` への push、`claude/**` への push、`main` への PR
 
-### トリガー
+### GitHub Pages デプロイ (`.github/workflows/deploy.yml`)
 
-- `main` ブランチへの push
-- `claude/**` ブランチへの push
-- `main` ブランチへの pull request
+`main` ブランチへの push 時に自動で GitHub Pages へデプロイします。
+
+1. **Lint** → **Type check** → **Build** (静的エクスポート)
+2. `out/` を GitHub Pages artifact としてアップロード
+3. GitHub Pages へデプロイ
+
+#### GitHub Pages の有効化手順
+
+1. リポジトリの **Settings → Pages** を開く
+2. **Source** で **GitHub Actions** を選択
+3. `main` ブランチに push すると自動デプロイされる
+4. デプロイ後 `https://<owner>.github.io/demo-collaboration-ag/` でアクセス可能
+
+手動デプロイは **Actions** タブから `Deploy to GitHub Pages` → **Run workflow** でも実行できます。
 
 ### ローカルでの確認方法
 
