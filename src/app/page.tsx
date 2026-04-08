@@ -194,12 +194,12 @@ export default function Home() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left: Chat — hidden on mobile when graph tab active */}
         <div
           className={`${
             mobileTab === "chat" ? "flex" : "hidden"
-          } md:flex w-full md:w-[420px] flex-shrink-0 md:border-r border-gray-200`}
+          } md:flex w-full md:w-[420px] md:flex-shrink-0 md:border-r border-gray-200`}
         >
           <ChatPanel
             messages={messages}
@@ -213,7 +213,7 @@ export default function Home() {
         <div
           className={`${
             mobileTab === "graph" ? "flex" : "hidden"
-          } md:flex flex-1 w-full min-w-0`}
+          } md:flex w-full md:w-auto flex-1 min-w-0`}
         >
           <FieldView
             phase={phase}

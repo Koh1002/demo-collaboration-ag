@@ -258,9 +258,9 @@ export default function FieldView({
     <div className="flex flex-col h-full w-full bg-gray-50/50">
       <StatusHeader phase={phase} />
 
-      {/* Graph area — aspect-ratio preserved container */}
-      <div className="flex-1 relative p-3 md:p-4 overflow-hidden">
-        <div className="relative w-full h-full min-h-[400px] rounded-2xl border border-gray-200 bg-white shadow-sm">
+      {/* Graph area — fills all remaining space */}
+      <div className="flex-1 relative p-2 md:p-4 overflow-hidden w-full">
+        <div className="absolute inset-2 md:inset-4 rounded-2xl border border-gray-200 bg-white shadow-sm">
           {/* --- SVG edges --- */}
           <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
             {/* PF ↔ Orchestrator */}
