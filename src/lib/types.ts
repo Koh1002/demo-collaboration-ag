@@ -38,6 +38,7 @@ export type UserIntent =
   | "compare_even_sum"
   | "count_odd_total"
   | "compare_average_summary_only"
+  | "cross_env_conditional"
   | "raw_request_denied"
   | "unknown";
 

@@ -40,9 +40,9 @@ export default function ChatPanel({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white">
+    <div className="flex flex-col h-full w-full bg-white min-h-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 md:px-5 py-2.5 md:py-3 border-b border-gray-200">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 md:px-5 py-2.5 md:py-3 border-b border-gray-200">
         <div>
           <h2 className="text-sm md:text-base font-semibold text-gray-800">
             オーケストレーター
@@ -59,11 +59,13 @@ export default function ChatPanel({
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto chat-scroll px-4 md:px-5 py-3 md:py-4 space-y-3">
+      {/* Messages — min-h-0 ensures flex child can shrink and scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto chat-scroll px-4 md:px-5 py-3 md:py-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-4xl mb-3">🤖</div>
+            <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-blue-100 flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </div>
             <p className="text-sm text-gray-500 mb-1">
               マルチエージェントオーケストレーターです
             </p>
@@ -106,7 +108,7 @@ export default function ChatPanel({
       </div>
 
       {/* Scenario buttons */}
-      <div className="px-4 md:px-5 py-2.5 md:py-3 border-t border-gray-100">
+      <div className="flex-shrink-0 px-4 md:px-5 py-2.5 md:py-3 border-t border-gray-100">
         <ScenarioButtons disabled={isRunning} onSelect={handleScenario} />
       </div>
 

@@ -13,6 +13,7 @@ import { environmentAValues, environmentBValues } from "@/lib/data";
 import StatusHeader from "./StatusHeader";
 import PolicyStatusBadge from "./PolicyStatusBadge";
 import SpeechBubble from "./SpeechBubble";
+import { OrchestratorIcon, AgentIcon, LockIcon, StatsIcon } from "./Icons";
 
 // ============================================================
 // Layout: percentage-based FIXED positions for graph nodes/zones
@@ -165,7 +166,7 @@ function AgentCircle({
   isActive,
   isComputing,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   sublabel?: string;
   color: string;
@@ -189,15 +190,14 @@ function AgentCircle({
         style={{ borderColor: color }}
       >
         {isComputing ? (
-          <motion.span
-            className="text-base md:text-lg"
-            animate={{ rotate: [0, 10, -10, 5, -5, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+          <motion.div
+            animate={{ rotate: [0, 8, -8, 4, -4, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity }}
           >
             {icon}
-          </motion.span>
+          </motion.div>
         ) : (
-          <span className="text-base md:text-lg">{icon}</span>
+          icon
         )}
       </div>
       <span className="mt-0.5 text-[9px] md:text-[11px] font-bold whitespace-nowrap" style={{ color }}>
@@ -347,7 +347,7 @@ export default function FieldView({
               </span>
             </div>
             <div className="absolute bottom-2 left-0 right-0 flex flex-col items-center gap-0.5">
-              <span className="text-[7px] md:text-[8px] text-gray-400">🔒 Raw data remains local</span>
+              <span className="inline-flex items-center gap-0.5 text-[7px] md:text-[8px] text-gray-400"><LockIcon size={10} /> Raw data remains local</span>
             </div>
           </Zone>
 
@@ -359,7 +359,7 @@ export default function FieldView({
               </span>
             </div>
             <div className="absolute bottom-2 left-0 right-0 flex flex-col items-center gap-0.5">
-              <span className="text-[7px] md:text-[8px] text-gray-400">🔒 Raw data remains local</span>
+              <span className="inline-flex items-center gap-0.5 text-[7px] md:text-[8px] text-gray-400"><LockIcon size={10} /> Raw data remains local</span>
             </div>
           </Zone>
 
@@ -381,7 +381,7 @@ export default function FieldView({
               />
             )}
             <div className="w-11 h-11 md:w-13 md:h-13 rounded-full bg-white border-2 border-blue-500 shadow-lg flex items-center justify-center z-10">
-              <span className="text-base md:text-lg">🤖</span>
+              <OrchestratorIcon size={22} />
             </div>
             <span className="mt-0.5 text-[9px] md:text-[11px] font-bold text-blue-600 whitespace-nowrap">
               Orchestrator
@@ -401,7 +401,7 @@ export default function FieldView({
             }}
           >
             <AgentCircle
-              icon="🛡️"
+              icon={<AgentIcon size={20} color="#34a853" />}
               label="Agent A"
               sublabel="代表エージェント"
               color="#34a853"
@@ -422,7 +422,7 @@ export default function FieldView({
             }}
           >
             <AgentCircle
-              icon="🛡️"
+              icon={<AgentIcon size={20} color="#e37400" />}
               label="Agent B"
               sublabel="代表エージェント"
               color="#e37400"
@@ -514,7 +514,7 @@ export default function FieldView({
 
           {/* Annotation — bottom right, out of the way */}
           <div className="absolute bottom-2 right-3 z-10 text-[7px] md:text-[8px] text-gray-300 text-right">
-            📊 統計情報のみ返却
+            <span className="inline-flex items-center gap-0.5"><StatsIcon size={10} /> 統計情報のみ返却</span>
           </div>
         </div>
       </div>

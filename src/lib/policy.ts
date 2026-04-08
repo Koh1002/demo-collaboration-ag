@@ -41,6 +41,8 @@ export function intentToSkill(intent: UserIntent): string {
       return "count_odd_numbers";
     case "compare_average_summary_only":
       return "average_all_numbers";
+    case "cross_env_conditional":
+      return "conditional_multi_step_analysis";
     case "raw_request_denied":
       return "get_raw_numbers";
     default:
@@ -51,6 +53,7 @@ export function intentToSkill(intent: UserIntent): string {
 /** Map intent to purpose_code */
 export function intentToPurposeCode(intent: UserIntent): string {
   if (intent === "raw_request_denied") return "raw_inspection";
+  if (intent === "cross_env_conditional") return "conditional_aggregate_analysis";
   return "aggregate_analysis";
 }
 

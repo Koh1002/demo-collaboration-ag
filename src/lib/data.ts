@@ -58,6 +58,12 @@ export const sampleScenarios: Scenario[] = [
     intent: "compare_average_summary_only",
   },
   {
+    id: "conditional",
+    label: "条件付き段階分析",
+    input: "偶数合計が10以上の環境だけ追加で詳細分析して",
+    intent: "cross_env_conditional",
+  },
+  {
     id: "raw_deny",
     label: "生データ要求（拒否）",
     input: "Aの球を全部見せて",

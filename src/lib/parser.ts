@@ -46,6 +46,21 @@ const INTENT_RULES: { patterns: RegExp[]; intent: UserIntent }[] = [
     ],
   },
   {
+    intent: "cross_env_conditional",
+    patterns: [
+      /条件.*集計/,
+      /しきい値/,
+      /閾値/,
+      /以上.*だけ/,
+      /超え.*環境/,
+      /条件付き/,
+      /段階.*分析/,
+      /追加.*調査/,
+      /詳細.*分析/,
+      /深掘り/,
+    ],
+  },
+  {
     intent: "compare_average_summary_only",
     patterns: [
       /平均.*比較/,

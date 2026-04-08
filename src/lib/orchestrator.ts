@@ -250,6 +250,342 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
 }
 
 /**
+ * Generate orchestration steps for the cross-environment conditional scenario.
+ * Flow:
+ *   Round 1 — query A & B for even sum
+ *   Evaluate — check which environments meet the threshold (≥ 10)
+ *   Round 2 — additional analysis (odd count) only for qualifying environments
+ *   Final integration
+ */
+function buildConditionalSteps(): OrchestrationStep[] {
+  const threshold = 10;
+
+  // Round 1 computations
+  const evenSumA = sumEven(getEnvData("A"));
+  const evenSumB = sumEven(getEnvData("B"));
+  const aQualifies = evenSumA >= threshold;
+  const bQualifies = evenSumB >= threshold;
+
+  // Secure requests for round 1 (even sum)
+  const reqA1 = buildSecureRequest("compare_even_sum", "A");
+  const reqB1 = buildSecureRequest("compare_even_sum", "B");
+
+  const steps: OrchestrationStep[] = [
+    // --- Submit & Plan ---
+    {
+      phase: "submitted",
+      delay: D,
+      log: "ユーザー依頼を受け付けました",
+      logType: "info",
+      speaker: "orchestrator",
+      orchestratorTarget: "center",
+    },
+    {
+      phase: "planning",
+      delay: D,
+      log: "依頼内容を解析しています",
+      logType: "info",
+      speaker: "orchestrator",
+    },
+    {
+      phase: "planning",
+      delay: D * 1.2,
+      log: `条件付き段階分析: まず偶数合計を取得し、閾値(${threshold})判定後に追加分析を実行します`,
+      logType: "info",
+      speaker: "orchestrator",
+    },
+
+    // --- Round 1: Contact A for even sum ---
+    {
+      phase: "contacting_a",
+      delay: D,
+      log: "【第1段階】環境Aへ偶数合計を問い合わせます",
+      logType: "info",
+      speaker: "orchestrator",
+      orchestratorTarget: "A",
+    },
+    {
+      phase: "authenticating",
+      delay: D * 0.8,
+      log: "認証情報を付与しました",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(1),
+    },
+    {
+      phase: "authenticating",
+      delay: D * 0.6,
+      log: "認証確認中です",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(3),
+    },
+    {
+      phase: "authorizing",
+      delay: D * 0.8,
+      log: "利用目的とスコープを確認しています",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(4),
+      secureRequest: reqA1,
+    },
+    {
+      phase: "authorizing",
+      delay: D,
+      log: "Policy判定: ALLOW",
+      logType: "policy_allow",
+      speaker: "policy",
+      authSteps: allAuthDone(),
+    },
+    {
+      phase: "local_computing",
+      delay: D * 1.5,
+      log: "ローカル計算を開始しました",
+      logType: "info",
+      speaker: "agent-a",
+    },
+    {
+      phase: "contacting_a",
+      delay: D,
+      log: `統計結果: 偶数合計 = ${evenSumA}`,
+      logType: "result",
+      speaker: "agent-a",
+      statResult: { environment: "A", label: "偶数合計", value: evenSumA },
+    },
+
+    // --- Round 1: Contact B for even sum ---
+    {
+      phase: "contacting_b",
+      delay: D,
+      log: "【第1段階】環境Bへ偶数合計を問い合わせます",
+      logType: "info",
+      speaker: "orchestrator",
+      orchestratorTarget: "B",
+    },
+    {
+      phase: "authenticating",
+      delay: D * 0.8,
+      log: "認証情報を付与しました",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(1),
+    },
+    {
+      phase: "authenticating",
+      delay: D * 0.6,
+      log: "認証確認中です",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(3),
+    },
+    {
+      phase: "authorizing",
+      delay: D * 0.8,
+      log: "利用目的とスコープを確認しています",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(4),
+      secureRequest: reqB1,
+    },
+    {
+      phase: "authorizing",
+      delay: D,
+      log: "Policy判定: ALLOW",
+      logType: "policy_allow",
+      speaker: "policy",
+      authSteps: allAuthDone(),
+    },
+    {
+      phase: "local_computing",
+      delay: D * 1.5,
+      log: "ローカル計算を開始しました",
+      logType: "info",
+      speaker: "agent-b",
+    },
+    {
+      phase: "contacting_b",
+      delay: D,
+      log: `統計結果: 偶数合計 = ${evenSumB}`,
+      logType: "result",
+      speaker: "agent-b",
+      statResult: { environment: "B", label: "偶数合計", value: evenSumB },
+    },
+
+    // --- Threshold evaluation ---
+    {
+      phase: "evaluating",
+      delay: D,
+      log: `閾値判定: A=${evenSumA} ${aQualifies ? "≥" : "<"} ${threshold}, B=${evenSumB} ${bQualifies ? "≥" : "<"} ${threshold}`,
+      logType: "info",
+      speaker: "orchestrator",
+      orchestratorTarget: "pf",
+    },
+    {
+      phase: "evaluating",
+      delay: D,
+      log: aQualifies && bQualifies
+        ? "両環境が条件を満たしました。追加分析を実行します"
+        : aQualifies
+          ? "環境Aのみ条件を満たしました。Aの追加分析を実行します"
+          : bQualifies
+            ? "環境Bのみ条件を満たしました。Bの追加分析を実行します"
+            : "条件を満たす環境はありません。分析を終了します",
+      logType: "result",
+      speaker: "orchestrator",
+    },
+  ];
+
+  // --- Round 2: Additional analysis for qualifying environments ---
+  if (aQualifies) {
+    const oddCountA = countOdd(getEnvData("A"));
+    const reqA2 = buildSecureRequest("count_odd_total", "A");
+    steps.push(
+      {
+        phase: "contacting_a",
+        delay: D,
+        log: "【第2段階】環境Aへ追加分析（奇数件数）を問い合わせます",
+        logType: "info",
+        speaker: "orchestrator",
+        orchestratorTarget: "A",
+      },
+      {
+        phase: "authenticating",
+        delay: D * 0.8,
+        log: "認証情報を付与しました",
+        logType: "auth",
+        speaker: "policy",
+        authSteps: buildAuthSteps(1),
+      },
+      {
+        phase: "authenticating",
+        delay: D * 0.6,
+        log: "認証確認中です",
+        logType: "auth",
+        speaker: "policy",
+        authSteps: buildAuthSteps(3),
+      },
+      {
+        phase: "authorizing",
+        delay: D * 0.8,
+        log: "利用目的とスコープを確認しています",
+        logType: "auth",
+        speaker: "policy",
+        authSteps: buildAuthSteps(4),
+        secureRequest: reqA2,
+      },
+      {
+        phase: "authorizing",
+        delay: D,
+        log: "Policy判定: ALLOW",
+        logType: "policy_allow",
+        speaker: "policy",
+        authSteps: allAuthDone(),
+      },
+      {
+        phase: "local_computing",
+        delay: D * 1.5,
+        log: "追加のローカル計算を開始しました",
+        logType: "info",
+        speaker: "agent-a",
+      },
+      {
+        phase: "contacting_a",
+        delay: D,
+        log: `追加統計結果: 奇数件数 = ${oddCountA}`,
+        logType: "result",
+        speaker: "agent-a",
+        statResult: { environment: "A", label: "奇数件数", value: oddCountA },
+      },
+    );
+  }
+
+  if (bQualifies) {
+    const oddCountB = countOdd(getEnvData("B"));
+    const reqB2 = buildSecureRequest("count_odd_total", "B");
+    steps.push(
+      {
+        phase: "contacting_b",
+        delay: D,
+        log: "【第2段階】環境Bへ追加分析（奇数件数）を問い合わせます",
+        logType: "info",
+        speaker: "orchestrator",
+        orchestratorTarget: "B",
+      },
+      {
+        phase: "authenticating",
+        delay: D * 0.8,
+        log: "認証情報を付与しました",
+        logType: "auth",
+        speaker: "policy",
+        authSteps: buildAuthSteps(1),
+      },
+      {
+        phase: "authenticating",
+        delay: D * 0.6,
+        log: "認証確認中です",
+        logType: "auth",
+        speaker: "policy",
+        authSteps: buildAuthSteps(3),
+      },
+      {
+        phase: "authorizing",
+        delay: D * 0.8,
+        log: "利用目的とスコープを確認しています",
+        logType: "auth",
+        speaker: "policy",
+        authSteps: buildAuthSteps(4),
+        secureRequest: reqB2,
+      },
+      {
+        phase: "authorizing",
+        delay: D,
+        log: "Policy判定: ALLOW",
+        logType: "policy_allow",
+        speaker: "policy",
+        authSteps: allAuthDone(),
+      },
+      {
+        phase: "local_computing",
+        delay: D * 1.5,
+        log: "追加のローカル計算を開始しました",
+        logType: "info",
+        speaker: "agent-b",
+      },
+      {
+        phase: "contacting_b",
+        delay: D,
+        log: `追加統計結果: 奇数件数 = ${oddCountB}`,
+        logType: "result",
+        speaker: "agent-b",
+        statResult: { environment: "B", label: "奇数件数", value: oddCountB },
+      },
+    );
+  }
+
+  // --- Final integration ---
+  steps.push(
+    {
+      phase: "evaluating",
+      delay: D,
+      log: "全段階の結果を統合しています",
+      logType: "info",
+      speaker: "platform",
+      orchestratorTarget: "pf",
+    },
+    {
+      phase: "completed",
+      delay: D,
+      log: "条件付き段階分析が完了しました",
+      logType: "info",
+      speaker: "orchestrator",
+      orchestratorTarget: "center",
+    },
+  );
+
+  return steps;
+}
+
+/**
  * Generate orchestration steps for DENY scenario.
  */
 function buildDenySteps(): OrchestrationStep[] {
@@ -340,6 +676,9 @@ function buildDenySteps(): OrchestrationStep[] {
 export function generateSteps(intent: UserIntent): OrchestrationStep[] {
   if (intent === "raw_request_denied") {
     return buildDenySteps();
+  }
+  if (intent === "cross_env_conditional") {
+    return buildConditionalSteps();
   }
   if (intent === "unknown") {
     return [

@@ -12,7 +12,7 @@ export const AUTH_CHECK_LABELS = [
 ] as const;
 
 /** Default step delay for orchestration animations (ms) */
-export const DEFAULT_STEP_DELAY = 1100;
+export const DEFAULT_STEP_DELAY = 1600;
 
 /** Colors used across the app — Google-inspired palette */
 export const COLORS = {
