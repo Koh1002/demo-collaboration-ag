@@ -453,35 +453,34 @@ export default function FieldView({
             })}
           </AnimatePresence>
 
-          {/* ===== Auth card overlay ===== */}
+          {/* ===== Auth card — fixed in top-right corner ===== */}
           <AnimatePresence>
             {currentRequest && authSteps.length > 0 && (
               <motion.div
-                key={`auth-${currentRequest.target}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
+                key={`auth-${currentRequest.target}-${currentRequest.skill}`}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
                 className="absolute z-30 pointer-events-none"
                 style={{
-                  left: "50%",
-                  top: "48%",
-                  transform: "translate(-50%, -50%)",
-                  width: "min(280px, 65%)",
+                  right: 8,
+                  top: 8,
+                  width: "min(220px, 45%)",
                 }}
               >
                 <div
-                  className={`rounded-xl border shadow-lg p-3 backdrop-blur-sm text-[10px] md:text-xs ${
+                  className={`rounded-lg border shadow-md p-2 backdrop-blur-sm text-[8px] md:text-[10px] ${
                     currentRequest.policy_decision === "DENY"
                       ? "bg-red-50/95 border-red-300"
                       : "bg-white/95 border-green-300"
                   }`}
                 >
-                  {/* Auth check steps */}
-                  <div className="flex flex-wrap gap-1 mb-2">
+                  {/* Auth check steps — compact single row */}
+                  <div className="flex flex-wrap gap-0.5 mb-1.5">
                     {authSteps.map((s, i) => (
                       <span
                         key={i}
-                        className={`px-1.5 py-0.5 rounded text-[9px] ${
+                        className={`px-1 py-0 rounded text-[7px] md:text-[8px] ${
                           s.done ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
                         }`}
                       >
@@ -489,25 +488,22 @@ export default function FieldView({
                       </span>
                     ))}
                   </div>
-                  {/* Metadata */}
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] md:text-[10px] font-mono text-gray-600">
-                    <span className="text-gray-400">requester</span>
-                    <span>{currentRequest.requester}</span>
+                  {/* Metadata — compact */}
+                  <div className="grid grid-cols-[auto_1fr] gap-x-1.5 gap-y-0 text-[7px] md:text-[9px] font-mono text-gray-600 leading-tight">
                     <span className="text-gray-400">target</span>
-                    <span>{currentRequest.target}</span>
+                    <span className="truncate">{currentRequest.target}</span>
                     <span className="text-gray-400">skill</span>
-                    <span>{currentRequest.skill}</span>
+                    <span className="truncate">{currentRequest.skill}</span>
                     <span className="text-gray-400">scope</span>
-                    <span>{currentRequest.requested_scope}</span>
+                    <span className="truncate">{currentRequest.requested_scope}</span>
                   </div>
                   {authSteps.every((s) => s.done) && (
-                    <div className="mt-2 flex items-center gap-1">
-                      <span className="text-[9px] text-gray-400">policy:</span>
+                    <div className="mt-1 flex items-center gap-1">
                       <PolicyStatusBadge decision={currentRequest.policy_decision} />
                     </div>
                   )}
                   {currentRequest.deny_reason && (
-                    <div className="mt-1 text-[9px] text-red-600 bg-red-100 rounded px-1.5 py-0.5">
+                    <div className="mt-1 text-[7px] md:text-[8px] text-red-600 bg-red-100 rounded px-1 py-0.5">
                       {currentRequest.deny_reason}
                     </div>
                   )}
@@ -516,9 +512,9 @@ export default function FieldView({
             )}
           </AnimatePresence>
 
-          {/* Annotation */}
-          <div className="absolute top-2 right-3 z-10 text-[7px] md:text-[9px] text-gray-400 text-right space-y-0.5">
-            <div>📊 統計情報のみ返却</div>
+          {/* Annotation — bottom right, out of the way */}
+          <div className="absolute bottom-2 right-3 z-10 text-[7px] md:text-[8px] text-gray-300 text-right">
+            📊 統計情報のみ返却
           </div>
         </div>
       </div>
