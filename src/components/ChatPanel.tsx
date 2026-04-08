@@ -72,7 +72,7 @@ export default function ChatPanel({
             </p>
           </div>
         )}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {messages.map((msg) => (
             <motion.div
               key={msg.id}

@@ -51,14 +51,16 @@ export default function FieldView({
   results,
 }: FieldViewProps) {
   const isActive = phase !== "idle";
-  const isComputingA =
-    phase === "local_computing" &&
-    (currentRequest?.target === "agent-A" || events.some(e => e.message.includes("A代表エージェント") && !events.some(e2 => e2.message.includes("Aから統計結果"))));
-  const isComputingB =
-    phase === "local_computing" &&
-    (currentRequest?.target === "agent-B" || events.some(e => e.message.includes("B代表エージェント") && !events.some(e2 => e2.message.includes("Bから統計結果"))));
-  const isContactingA = phase === "contacting_a" || (phase === "authenticating" && currentRequest?.target === "agent-A") || (phase === "authorizing" && currentRequest?.target === "agent-A");
-  const isContactingB = phase === "contacting_b" || (phase === "authenticating" && currentRequest?.target === "agent-B") || (phase === "authorizing" && currentRequest?.target === "agent-B");
+  const targetIsA = currentRequest?.target === "agent-A";
+  const targetIsB = currentRequest?.target === "agent-B";
+  const isComputingA = phase === "local_computing" && targetIsA;
+  const isComputingB = phase === "local_computing" && targetIsB;
+  const isContactingA =
+    phase === "contacting_a" ||
+    ((phase === "authenticating" || phase === "authorizing") && targetIsA);
+  const isContactingB =
+    phase === "contacting_b" ||
+    ((phase === "authenticating" || phase === "authorizing") && targetIsB);
 
   return (
     <div className="flex flex-col h-full bg-gray-50/50">
@@ -80,8 +82,8 @@ export default function FieldView({
               </div>
               {results.length > 0 && (
                 <div className="mt-2 flex flex-col gap-1">
-                  {results.map((r, i) => (
-                    <ResultCard key={i} result={r} />
+                  {results.map((r) => (
+                    <ResultCard key={`${r.environment}-${r.label}`} result={r} />
                   ))}
                 </div>
               )}

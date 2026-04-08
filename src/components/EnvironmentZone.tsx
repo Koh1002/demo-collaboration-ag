@@ -43,10 +43,7 @@ export default function EnvironmentZone({
   const c = envColors[envId];
 
   return (
-    <motion.div
-      animate={{
-        borderColor: isActive ? undefined : undefined,
-      }}
+    <div
       className={`relative rounded-2xl border-2 ${
         isActive ? c.activeBorder : c.border
       } ${c.bg} p-4 transition-colors duration-300`}
@@ -103,6 +100,6 @@ export default function EnvironmentZone({
           <span className="text-[9px] text-gray-500">Summary only</span>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
