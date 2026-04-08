@@ -213,7 +213,7 @@ export default function Home() {
         <div
           className={`${
             mobileTab === "graph" ? "flex" : "hidden"
-          } md:flex flex-1 min-w-0`}
+          } md:flex flex-1 w-full min-w-0`}
         >
           <FieldView
             phase={phase}

@@ -255,7 +255,7 @@ export default function FieldView({
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50/50">
+    <div className="flex flex-col h-full w-full bg-gray-50/50">
       <StatusHeader phase={phase} />
 
       {/* Graph area — aspect-ratio preserved container */}
