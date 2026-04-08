@@ -101,12 +101,30 @@ export interface OrchestratorPosition {
   y: number;
 }
 
+/** Who is "speaking" a log message in the graph visualization */
+export type BubbleSpeaker =
+  | "orchestrator"
+  | "agent-a"
+  | "agent-b"
+  | "platform"
+  | "policy";
+
+/** A speech bubble displayed on the graph */
+export interface Bubble {
+  id: string;
+  speaker: BubbleSpeaker;
+  message: string;
+  type: EventLogEntry["type"];
+  timestamp: number;
+}
+
 /** Orchestration step for sequential execution */
 export interface OrchestrationStep {
   phase: AppPhase;
   delay: number; // ms to wait before this step
   log?: string;
   logType?: EventLogEntry["type"];
+  speaker?: BubbleSpeaker;
   chatMessage?: string;
   secureRequest?: SecureRequest;
   authSteps?: AuthStep[];

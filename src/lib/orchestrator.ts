@@ -95,6 +95,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D,
       log: "ユーザー依頼を受け付けました",
       logType: "info",
+      speaker: "orchestrator",
       orchestratorTarget: "center",
     },
     {
@@ -102,12 +103,14 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D,
       log: "依頼内容を解析しています",
       logType: "info",
+      speaker: "orchestrator",
     },
     {
       phase: "planning",
       delay: D * 1.2,
       log: `集計依頼「${skillLabel}」に変換しました`,
       logType: "info",
+      speaker: "orchestrator",
     },
 
     // --- Contact A ---
@@ -116,6 +119,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D,
       log: "環境Aへ問い合わせを開始します",
       logType: "info",
+      speaker: "orchestrator",
       orchestratorTarget: "A",
     },
     {
@@ -123,6 +127,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D * 0.8,
       log: "認証情報を付与しました",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(1),
     },
     {
@@ -130,6 +135,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D * 0.6,
       log: "認証確認中です",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(3),
     },
     {
@@ -137,6 +143,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D * 0.8,
       log: "利用目的とスコープを確認しています",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(4),
       secureRequest: requestA,
     },
@@ -145,19 +152,22 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D,
       log: "Policy判定: ALLOW",
       logType: "policy_allow",
+      speaker: "policy",
       authSteps: allAuthDone(),
     },
     {
       phase: "local_computing",
       delay: D * 1.5,
-      log: "A代表エージェントがローカル計算を開始しました",
+      log: "ローカル計算を開始しました",
       logType: "info",
+      speaker: "agent-a",
     },
     {
       phase: "contacting_a",
       delay: D,
-      log: `Aから統計結果を受領しました（${resultA.label}: ${resultA.value}）`,
+      log: `統計結果: ${resultA.label} = ${resultA.value}`,
       logType: "result",
+      speaker: "agent-a",
       statResult: resultA,
     },
 
@@ -167,6 +177,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D,
       log: "続いて環境Bへ問い合わせます",
       logType: "info",
+      speaker: "orchestrator",
       orchestratorTarget: "B",
     },
     {
@@ -174,6 +185,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D * 0.8,
       log: "認証情報を付与しました",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(1),
     },
     {
@@ -181,6 +193,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D * 0.6,
       log: "認証確認中です",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(3),
     },
     {
@@ -188,6 +201,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D * 0.8,
       log: "利用目的とスコープを確認しています",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(4),
       secureRequest: requestB,
     },
@@ -196,19 +210,22 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D,
       log: "Policy判定: ALLOW",
       logType: "policy_allow",
+      speaker: "policy",
       authSteps: allAuthDone(),
     },
     {
       phase: "local_computing",
       delay: D * 1.5,
-      log: "B代表エージェントがローカル計算を開始しました",
+      log: "ローカル計算を開始しました",
       logType: "info",
+      speaker: "agent-b",
     },
     {
       phase: "contacting_b",
       delay: D,
-      log: `Bから統計結果を受領しました（${resultB.label}: ${resultB.value}）`,
+      log: `統計結果: ${resultB.label} = ${resultB.value}`,
       logType: "result",
+      speaker: "agent-b",
       statResult: resultB,
     },
 
@@ -218,6 +235,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D,
       log: "結果を比較・統合しています",
       logType: "info",
+      speaker: "platform",
       orchestratorTarget: "pf",
     },
     {
@@ -225,6 +243,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       delay: D,
       log: "処理が完了しました",
       logType: "info",
+      speaker: "orchestrator",
       orchestratorTarget: "center",
     },
   ];
@@ -242,6 +261,7 @@ function buildDenySteps(): OrchestrationStep[] {
       delay: D,
       log: "ユーザー依頼を受け付けました",
       logType: "info",
+      speaker: "orchestrator",
       orchestratorTarget: "center",
     },
     {
@@ -249,18 +269,21 @@ function buildDenySteps(): OrchestrationStep[] {
       delay: D,
       log: "依頼内容を解析しています",
       logType: "info",
+      speaker: "orchestrator",
     },
     {
       phase: "planning",
       delay: D,
       log: "raw data の取得要求を検知しました",
       logType: "error",
+      speaker: "orchestrator",
     },
     {
       phase: "authenticating",
       delay: D * 0.8,
       log: "認証情報を付与しました",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(1),
       orchestratorTarget: "A",
     },
@@ -269,6 +292,7 @@ function buildDenySteps(): OrchestrationStep[] {
       delay: D * 0.6,
       log: "認証確認中です",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(3),
     },
     {
@@ -276,6 +300,7 @@ function buildDenySteps(): OrchestrationStep[] {
       delay: D * 0.8,
       log: "利用目的とスコープを確認しています",
       logType: "auth",
+      speaker: "policy",
       authSteps: buildAuthSteps(4),
       secureRequest: requestA,
     },
@@ -284,6 +309,7 @@ function buildDenySteps(): OrchestrationStep[] {
       delay: D,
       log: "Policy判定: DENY",
       logType: "policy_deny",
+      speaker: "policy",
       authSteps: allAuthDone(),
     },
     {
@@ -291,12 +317,14 @@ function buildDenySteps(): OrchestrationStep[] {
       delay: D * 0.8,
       log: "理由: raw_data_request_not_permitted",
       logType: "policy_deny",
+      speaker: "policy",
     },
     {
       phase: "denied",
       delay: D,
       log: "この依頼は拒否されました。取得可能なのは統計情報のみです",
       logType: "error",
+      speaker: "orchestrator",
       orchestratorTarget: "center",
     },
   ];
@@ -320,6 +348,7 @@ export function generateSteps(intent: UserIntent): OrchestrationStep[] {
         delay: D,
         log: "ユーザー依頼を受け付けました",
         logType: "info",
+        speaker: "orchestrator",
         orchestratorTarget: "center",
       },
       {
@@ -327,6 +356,7 @@ export function generateSteps(intent: UserIntent): OrchestrationStep[] {
         delay: D,
         log: "依頼内容を解釈できませんでした。サンプルシナリオをお試しください。",
         logType: "error",
+        speaker: "orchestrator",
       },
     ];
   }

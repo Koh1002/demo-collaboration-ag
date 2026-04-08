@@ -40,14 +40,14 @@ export default function ChatPanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full w-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 md:px-5 py-2.5 md:py-3 border-b border-gray-200">
         <div>
-          <h2 className="text-base font-semibold text-gray-800">
+          <h2 className="text-sm md:text-base font-semibold text-gray-800">
             オーケストレーター
           </h2>
-          <p className="text-xs text-gray-400">
+          <p className="text-[10px] md:text-xs text-gray-400">
             マルチエージェント連携デモ
           </p>
         </div>
@@ -60,7 +60,7 @@ export default function ChatPanel({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto chat-scroll px-5 py-4 space-y-3">
+      <div className="flex-1 overflow-y-auto chat-scroll px-4 md:px-5 py-3 md:py-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-center py-12">
             <div className="text-4xl mb-3">🤖</div>
@@ -106,14 +106,14 @@ export default function ChatPanel({
       </div>
 
       {/* Scenario buttons */}
-      <div className="px-5 py-3 border-t border-gray-100">
+      <div className="px-4 md:px-5 py-2.5 md:py-3 border-t border-gray-100">
         <ScenarioButtons disabled={isRunning} onSelect={handleScenario} />
       </div>
 
       {/* Input */}
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 px-5 py-3 border-t border-gray-200"
+        className="flex items-center gap-2 px-4 md:px-5 py-2.5 md:py-3 border-t border-gray-200"
       >
         <input
           type="text"
