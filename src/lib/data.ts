@@ -10,6 +10,9 @@ export const environmentAValues: number[] = [1, 3, 4, 8];
 /** Environment B internal ball values */
 export const environmentBValues: number[] = [2, 5, 6, 7];
 
+/** Environment C internal ball values */
+export const environmentCValues: number[] = [3, 6, 9, 10];
+
 // ============================================================
 // Agent metadata
 // ============================================================
@@ -32,6 +35,12 @@ export const agents = {
     description: "環境B 代表エージェント",
     environment: "B" as const,
   },
+  agentC: {
+    id: "agent-C",
+    name: "Agent C",
+    description: "環境C 代表エージェント",
+    environment: "C" as const,
+  },
 } as const;
 
 // ============================================================
@@ -42,13 +51,13 @@ export const sampleScenarios: Scenario[] = [
   {
     id: "compare_even",
     label: "偶数球の合計を比較",
-    input: "AとBの偶数球の合計を比較して",
+    input: "A・B・Cの偶数球の合計を比較して",
     intent: "compare_even_sum",
   },
   {
     id: "count_odd",
     label: "奇数球の総数を算出",
-    input: "奇数球の件数をA/Bそれぞれ数えて、総数を教えて",
+    input: "奇数球の件数をA/B/Cそれぞれ数えて、総数を教えて",
     intent: "count_odd_total",
   },
   {

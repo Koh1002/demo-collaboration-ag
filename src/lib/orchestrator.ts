@@ -3,7 +3,7 @@ import {
   OrchestrationStep,
   StatResult,
 } from "./types";
-import { environmentAValues, environmentBValues } from "./data";
+import { environmentAValues, environmentBValues, environmentCValues } from "./data";
 import { buildSecureRequest } from "./policy";
 import { AUTH_CHECK_LABELS, DEFAULT_STEP_DELAY } from "./constants";
 
@@ -28,14 +28,16 @@ function average(values: number[]): number {
 }
 
 /** Get the internal data for a given environment */
-function getEnvData(env: "A" | "B"): number[] {
-  return env === "A" ? environmentAValues : environmentBValues;
+function getEnvData(env: "A" | "B" | "C"): number[] {
+  if (env === "A") return environmentAValues;
+  if (env === "B") return environmentBValues;
+  return environmentCValues;
 }
 
 /** Compute the statistic locally inside the environment */
 function computeLocal(
   intent: UserIntent,
-  env: "A" | "B"
+  env: "A" | "B" | "C"
 ): StatResult {
   const data = getEnvData(env);
   switch (intent) {
@@ -71,15 +73,86 @@ function allAuthDone() {
 
 const D = DEFAULT_STEP_DELAY;
 
+type EnvId = "A" | "B" | "C";
+const envSpeaker = { A: "agent-a", B: "agent-b", C: "agent-c" } as const;
+const envPhase = { A: "contacting_a", B: "contacting_b", C: "contacting_c" } as const;
+
+/** Build the auth → compute → result steps for contacting one environment */
+function buildEnvContactSteps(
+  env: EnvId,
+  intent: UserIntent,
+  result: StatResult,
+  logPrefix: string,
+): OrchestrationStep[] {
+  const request = buildSecureRequest(intent, env);
+  return [
+    {
+      phase: envPhase[env],
+      delay: D,
+      log: `${logPrefix}環境${env}へ問い合わせます`,
+      logType: "info",
+      speaker: "orchestrator",
+      orchestratorTarget: env,
+    },
+    {
+      phase: "authenticating",
+      delay: D * 0.8,
+      log: "認証情報を付与しました",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(1),
+    },
+    {
+      phase: "authenticating",
+      delay: D * 0.6,
+      log: "認証確認中です",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(3),
+    },
+    {
+      phase: "authorizing",
+      delay: D * 0.8,
+      log: "利用目的とスコープを確認しています",
+      logType: "auth",
+      speaker: "policy",
+      authSteps: buildAuthSteps(4),
+      secureRequest: request,
+    },
+    {
+      phase: "authorizing",
+      delay: D,
+      log: "Policy判定: ALLOW",
+      logType: "policy_allow",
+      speaker: "policy",
+      authSteps: allAuthDone(),
+    },
+    {
+      phase: "local_computing",
+      delay: D * 1.5,
+      log: "ローカル計算を開始しました",
+      logType: "info",
+      speaker: envSpeaker[env],
+    },
+    {
+      phase: envPhase[env],
+      delay: D,
+      log: `統計結果: ${result.label} = ${result.value}`,
+      logType: "result",
+      speaker: envSpeaker[env],
+      statResult: result,
+    },
+  ];
+}
+
 /**
  * Generate the full orchestration step sequence for ALLOW scenarios.
- * Flow: submit → plan → auth A → compute A → auth B → compute B → evaluate → complete
+ * Flow: submit → plan → auth A → compute A → auth B → compute B → auth C → compute C → evaluate → complete
  */
 function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
-  const requestA = buildSecureRequest(intent, "A");
-  const requestB = buildSecureRequest(intent, "B");
   const resultA = computeLocal(intent, "A");
   const resultB = computeLocal(intent, "B");
+  const resultC = computeLocal(intent, "C");
 
   const skillLabel =
     intent === "compare_even_sum"
@@ -113,121 +186,10 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
       speaker: "orchestrator",
     },
 
-    // --- Contact A ---
-    {
-      phase: "contacting_a",
-      delay: D,
-      log: "環境Aへ問い合わせを開始します",
-      logType: "info",
-      speaker: "orchestrator",
-      orchestratorTarget: "A",
-    },
-    {
-      phase: "authenticating",
-      delay: D * 0.8,
-      log: "認証情報を付与しました",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(1),
-    },
-    {
-      phase: "authenticating",
-      delay: D * 0.6,
-      log: "認証確認中です",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(3),
-    },
-    {
-      phase: "authorizing",
-      delay: D * 0.8,
-      log: "利用目的とスコープを確認しています",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(4),
-      secureRequest: requestA,
-    },
-    {
-      phase: "authorizing",
-      delay: D,
-      log: "Policy判定: ALLOW",
-      logType: "policy_allow",
-      speaker: "policy",
-      authSteps: allAuthDone(),
-    },
-    {
-      phase: "local_computing",
-      delay: D * 1.5,
-      log: "ローカル計算を開始しました",
-      logType: "info",
-      speaker: "agent-a",
-    },
-    {
-      phase: "contacting_a",
-      delay: D,
-      log: `統計結果: ${resultA.label} = ${resultA.value}`,
-      logType: "result",
-      speaker: "agent-a",
-      statResult: resultA,
-    },
-
-    // --- Contact B ---
-    {
-      phase: "contacting_b",
-      delay: D,
-      log: "続いて環境Bへ問い合わせます",
-      logType: "info",
-      speaker: "orchestrator",
-      orchestratorTarget: "B",
-    },
-    {
-      phase: "authenticating",
-      delay: D * 0.8,
-      log: "認証情報を付与しました",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(1),
-    },
-    {
-      phase: "authenticating",
-      delay: D * 0.6,
-      log: "認証確認中です",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(3),
-    },
-    {
-      phase: "authorizing",
-      delay: D * 0.8,
-      log: "利用目的とスコープを確認しています",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(4),
-      secureRequest: requestB,
-    },
-    {
-      phase: "authorizing",
-      delay: D,
-      log: "Policy判定: ALLOW",
-      logType: "policy_allow",
-      speaker: "policy",
-      authSteps: allAuthDone(),
-    },
-    {
-      phase: "local_computing",
-      delay: D * 1.5,
-      log: "ローカル計算を開始しました",
-      logType: "info",
-      speaker: "agent-b",
-    },
-    {
-      phase: "contacting_b",
-      delay: D,
-      log: `統計結果: ${resultB.label} = ${resultB.value}`,
-      logType: "result",
-      speaker: "agent-b",
-      statResult: resultB,
-    },
+    // --- Contact A, B, C ---
+    ...buildEnvContactSteps("A", intent, resultA, ""),
+    ...buildEnvContactSteps("B", intent, resultB, "続いて"),
+    ...buildEnvContactSteps("C", intent, resultC, "続いて"),
 
     // --- Evaluate & Complete ---
     {
@@ -252,7 +214,7 @@ function buildAllowSteps(intent: UserIntent): OrchestrationStep[] {
 /**
  * Generate orchestration steps for the cross-environment conditional scenario.
  * Flow:
- *   Round 1 — query A & B for even sum
+ *   Round 1 — query A, B, C for even sum
  *   Evaluate — check which environments meet the threshold (≥ 10)
  *   Round 2 — additional analysis (odd count) only for qualifying environments
  *   Final integration
@@ -261,14 +223,16 @@ function buildConditionalSteps(): OrchestrationStep[] {
   const threshold = 10;
 
   // Round 1 computations
-  const evenSumA = sumEven(getEnvData("A"));
-  const evenSumB = sumEven(getEnvData("B"));
-  const aQualifies = evenSumA >= threshold;
-  const bQualifies = evenSumB >= threshold;
-
-  // Secure requests for round 1 (even sum)
-  const reqA1 = buildSecureRequest("compare_even_sum", "A");
-  const reqB1 = buildSecureRequest("compare_even_sum", "B");
+  const evenSums: Record<EnvId, number> = {
+    A: sumEven(getEnvData("A")),
+    B: sumEven(getEnvData("B")),
+    C: sumEven(getEnvData("C")),
+  };
+  const qualifies: Record<EnvId, boolean> = {
+    A: evenSums.A >= threshold,
+    B: evenSums.B >= threshold,
+    C: evenSums.C >= threshold,
+  };
 
   const steps: OrchestrationStep[] = [
     // --- Submit & Plan ---
@@ -294,128 +258,25 @@ function buildConditionalSteps(): OrchestrationStep[] {
       logType: "info",
       speaker: "orchestrator",
     },
+  ];
 
-    // --- Round 1: Contact A for even sum ---
-    {
-      phase: "contacting_a",
-      delay: D,
-      log: "【第1段階】環境Aへ偶数合計を問い合わせます",
-      logType: "info",
-      speaker: "orchestrator",
-      orchestratorTarget: "A",
-    },
-    {
-      phase: "authenticating",
-      delay: D * 0.8,
-      log: "認証情報を付与しました",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(1),
-    },
-    {
-      phase: "authenticating",
-      delay: D * 0.6,
-      log: "認証確認中です",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(3),
-    },
-    {
-      phase: "authorizing",
-      delay: D * 0.8,
-      log: "利用目的とスコープを確認しています",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(4),
-      secureRequest: reqA1,
-    },
-    {
-      phase: "authorizing",
-      delay: D,
-      log: "Policy判定: ALLOW",
-      logType: "policy_allow",
-      speaker: "policy",
-      authSteps: allAuthDone(),
-    },
-    {
-      phase: "local_computing",
-      delay: D * 1.5,
-      log: "ローカル計算を開始しました",
-      logType: "info",
-      speaker: "agent-a",
-    },
-    {
-      phase: "contacting_a",
-      delay: D,
-      log: `統計結果: 偶数合計 = ${evenSumA}`,
-      logType: "result",
-      speaker: "agent-a",
-      statResult: { environment: "A", label: "偶数合計", value: evenSumA },
-    },
+  // --- Round 1: Query all environments for even sum ---
+  for (const env of ["A", "B", "C"] as EnvId[]) {
+    const result: StatResult = { environment: env, label: "偶数合計", value: evenSums[env] };
+    steps.push(...buildEnvContactSteps(env, "compare_even_sum", result, "【第1段階】"));
+  }
 
-    // --- Round 1: Contact B for even sum ---
-    {
-      phase: "contacting_b",
-      delay: D,
-      log: "【第1段階】環境Bへ偶数合計を問い合わせます",
-      logType: "info",
-      speaker: "orchestrator",
-      orchestratorTarget: "B",
-    },
-    {
-      phase: "authenticating",
-      delay: D * 0.8,
-      log: "認証情報を付与しました",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(1),
-    },
-    {
-      phase: "authenticating",
-      delay: D * 0.6,
-      log: "認証確認中です",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(3),
-    },
-    {
-      phase: "authorizing",
-      delay: D * 0.8,
-      log: "利用目的とスコープを確認しています",
-      logType: "auth",
-      speaker: "policy",
-      authSteps: buildAuthSteps(4),
-      secureRequest: reqB1,
-    },
-    {
-      phase: "authorizing",
-      delay: D,
-      log: "Policy判定: ALLOW",
-      logType: "policy_allow",
-      speaker: "policy",
-      authSteps: allAuthDone(),
-    },
-    {
-      phase: "local_computing",
-      delay: D * 1.5,
-      log: "ローカル計算を開始しました",
-      logType: "info",
-      speaker: "agent-b",
-    },
-    {
-      phase: "contacting_b",
-      delay: D,
-      log: `統計結果: 偶数合計 = ${evenSumB}`,
-      logType: "result",
-      speaker: "agent-b",
-      statResult: { environment: "B", label: "偶数合計", value: evenSumB },
-    },
+  // --- Threshold evaluation ---
+  const qualifiedList = (["A", "B", "C"] as EnvId[]).filter((e) => qualifies[e]);
+  const judgmentParts = (["A", "B", "C"] as EnvId[])
+    .map((e) => `${e}=${evenSums[e]} ${qualifies[e] ? "≥" : "<"} ${threshold}`)
+    .join(", ");
 
-    // --- Threshold evaluation ---
+  steps.push(
     {
       phase: "evaluating",
       delay: D,
-      log: `閾値判定: A=${evenSumA} ${aQualifies ? "≥" : "<"} ${threshold}, B=${evenSumB} ${bQualifies ? "≥" : "<"} ${threshold}`,
+      log: `閾値判定: ${judgmentParts}`,
       logType: "info",
       speaker: "orchestrator",
       orchestratorTarget: "pf",
@@ -423,30 +284,27 @@ function buildConditionalSteps(): OrchestrationStep[] {
     {
       phase: "evaluating",
       delay: D,
-      log: aQualifies && bQualifies
-        ? "両環境が条件を満たしました。追加分析を実行します"
-        : aQualifies
-          ? "環境Aのみ条件を満たしました。Aの追加分析を実行します"
-          : bQualifies
-            ? "環境Bのみ条件を満たしました。Bの追加分析を実行します"
-            : "条件を満たす環境はありません。分析を終了します",
+      log: qualifiedList.length > 0
+        ? `環境${qualifiedList.join("・")}が条件を満たしました。追加分析を実行します`
+        : "条件を満たす環境はありません。分析を終了します",
       logType: "result",
       speaker: "orchestrator",
     },
-  ];
+  );
 
   // --- Round 2: Additional analysis for qualifying environments ---
-  if (aQualifies) {
-    const oddCountA = countOdd(getEnvData("A"));
-    const reqA2 = buildSecureRequest("count_odd_total", "A");
+  for (const env of qualifiedList) {
+    const oddCount = countOdd(getEnvData(env));
+    const result: StatResult = { environment: env, label: "奇数件数", value: oddCount };
+    const request = buildSecureRequest("count_odd_total", env);
     steps.push(
       {
-        phase: "contacting_a",
+        phase: envPhase[env],
         delay: D,
-        log: "【第2段階】環境Aへ追加分析（奇数件数）を問い合わせます",
+        log: `【第2段階】環境${env}へ追加分析（奇数件数）を問い合わせます`,
         logType: "info",
         speaker: "orchestrator",
-        orchestratorTarget: "A",
+        orchestratorTarget: env,
       },
       {
         phase: "authenticating",
@@ -471,7 +329,7 @@ function buildConditionalSteps(): OrchestrationStep[] {
         logType: "auth",
         speaker: "policy",
         authSteps: buildAuthSteps(4),
-        secureRequest: reqA2,
+        secureRequest: request,
       },
       {
         phase: "authorizing",
@@ -486,78 +344,15 @@ function buildConditionalSteps(): OrchestrationStep[] {
         delay: D * 1.5,
         log: "追加のローカル計算を開始しました",
         logType: "info",
-        speaker: "agent-a",
+        speaker: envSpeaker[env],
       },
       {
-        phase: "contacting_a",
+        phase: envPhase[env],
         delay: D,
-        log: `追加統計結果: 奇数件数 = ${oddCountA}`,
+        log: `追加統計結果: 奇数件数 = ${oddCount}`,
         logType: "result",
-        speaker: "agent-a",
-        statResult: { environment: "A", label: "奇数件数", value: oddCountA },
-      },
-    );
-  }
-
-  if (bQualifies) {
-    const oddCountB = countOdd(getEnvData("B"));
-    const reqB2 = buildSecureRequest("count_odd_total", "B");
-    steps.push(
-      {
-        phase: "contacting_b",
-        delay: D,
-        log: "【第2段階】環境Bへ追加分析（奇数件数）を問い合わせます",
-        logType: "info",
-        speaker: "orchestrator",
-        orchestratorTarget: "B",
-      },
-      {
-        phase: "authenticating",
-        delay: D * 0.8,
-        log: "認証情報を付与しました",
-        logType: "auth",
-        speaker: "policy",
-        authSteps: buildAuthSteps(1),
-      },
-      {
-        phase: "authenticating",
-        delay: D * 0.6,
-        log: "認証確認中です",
-        logType: "auth",
-        speaker: "policy",
-        authSteps: buildAuthSteps(3),
-      },
-      {
-        phase: "authorizing",
-        delay: D * 0.8,
-        log: "利用目的とスコープを確認しています",
-        logType: "auth",
-        speaker: "policy",
-        authSteps: buildAuthSteps(4),
-        secureRequest: reqB2,
-      },
-      {
-        phase: "authorizing",
-        delay: D,
-        log: "Policy判定: ALLOW",
-        logType: "policy_allow",
-        speaker: "policy",
-        authSteps: allAuthDone(),
-      },
-      {
-        phase: "local_computing",
-        delay: D * 1.5,
-        log: "追加のローカル計算を開始しました",
-        logType: "info",
-        speaker: "agent-b",
-      },
-      {
-        phase: "contacting_b",
-        delay: D,
-        log: `追加統計結果: 奇数件数 = ${oddCountB}`,
-        logType: "result",
-        speaker: "agent-b",
-        statResult: { environment: "B", label: "奇数件数", value: oddCountB },
+        speaker: envSpeaker[env],
+        statResult: result,
       },
     );
   }

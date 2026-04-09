@@ -60,13 +60,15 @@ export function intentToPurposeCode(intent: UserIntent): string {
 /** Build a SecureRequest metadata object for a given target */
 export function buildSecureRequest(
   intent: UserIntent,
-  target: "A" | "B"
+  target: "A" | "B" | "C"
 ): SecureRequest {
   const scope = intentToScope(intent);
   const policy = evaluatePolicy(scope);
+  const targetAgent =
+    target === "A" ? agents.agentA : target === "B" ? agents.agentB : agents.agentC;
   return {
     requester: agents.orchestrator.id,
-    target: target === "A" ? agents.agentA.id : agents.agentB.id,
+    target: targetAgent.id,
     skill: intentToSkill(intent),
     purpose_code: intentToPurposeCode(intent),
     requested_scope: scope,

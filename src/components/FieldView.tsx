@@ -9,7 +9,7 @@ import {
   SecureRequest,
   StatResult,
 } from "@/lib/types";
-import { environmentAValues, environmentBValues } from "@/lib/data";
+import { environmentAValues, environmentBValues, environmentCValues } from "@/lib/data";
 import StatusHeader from "./StatusHeader";
 import PolicyStatusBadge from "./PolicyStatusBadge";
 import SpeechBubble from "./SpeechBubble";
@@ -21,18 +21,20 @@ import { OrchestratorIcon, AgentIcon, LockIcon, StatsIcon } from "./Icons";
 
 /** Fixed positions — edges always connect these points */
 const NODE = {
-  orchestratorHome: { x: 50, y: 18 },  // Orchestrator's home zone (top center)
-  envA:             { x: 28, y: 76 },   // Environment A zone (bottom left)
-  envB:             { x: 72, y: 76 },   // Environment B zone (bottom right)
+  orchestratorHome: { x: 50, y: 15 },  // Orchestrator's home zone (top center)
+  envA:             { x: 20, y: 76 },   // Environment A zone (bottom left)
+  envB:             { x: 50, y: 76 },   // Environment B zone (bottom center)
+  envC:             { x: 80, y: 76 },   // Environment C zone (bottom right)
 } as const;
 
 /** Where the orchestrator moves to for each target */
 function getOrchestratorPos(target: string): { x: number; y: number } {
   switch (target) {
-    case "A":  return { x: 33, y: 56 };   // near Env A
-    case "B":  return { x: 67, y: 56 };   // near Env B
-    case "pf": return { x: 50, y: 25 };   // near home (evaluating)
-    default:   return NODE.orchestratorHome; // home
+    case "A":  return { x: 28, y: 52 };
+    case "B":  return { x: 50, y: 52 };
+    case "C":  return { x: 72, y: 52 };
+    case "pf": return { x: 50, y: 22 };
+    default:   return NODE.orchestratorHome;
   }
 }
 
@@ -83,7 +85,7 @@ function BallRow({
   isComputing: boolean;
 }) {
   return (
-    <div className="flex gap-1.5 mt-2">
+    <div className="flex gap-1 mt-1.5">
       {Array.from({ length: count }).map((_, i) => (
         <motion.div
           key={i}
@@ -105,13 +107,13 @@ function BallRow({
               ? { duration: 1.2, repeat: Infinity, delay: i * 0.25 }
               : { duration: 0.3 }
           }
-          className="w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center border"
+          className="w-3.5 h-3.5 md:w-4 md:h-4 rounded-full flex items-center justify-center border"
           style={{
             backgroundColor: `${color}20`,
             borderColor: `${color}50`,
           }}
         >
-          <span className="text-[7px] md:text-[8px] font-bold" style={{ color }}>
+          <span className="text-[6px] md:text-[7px] font-bold" style={{ color }}>
             ?
           </span>
         </motion.div>
@@ -120,7 +122,7 @@ function BallRow({
   );
 }
 
-/** A zone boundary — the "secure area" background (used for all three zones) */
+/** A zone boundary — the "secure area" background */
 function Zone({
   x,
   y,
@@ -179,14 +181,14 @@ function AgentCircle({
       {isActive && (
         <motion.div
           className="absolute rounded-full"
-          style={{ width: 56, height: 56, backgroundColor: `${color}20`, top: -4, left: "50%", marginLeft: -28 }}
+          style={{ width: 48, height: 48, backgroundColor: `${color}20`, top: -2, left: "50%", marginLeft: -24 }}
           animate={{ scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }}
           transition={{ duration: 2.5, repeat: Infinity }}
         />
       )}
       {/* Circle */}
       <div
-        className="relative w-11 h-11 md:w-13 md:h-13 rounded-full bg-white border-2 shadow-md flex items-center justify-center z-10"
+        className="relative w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border-2 shadow-md flex items-center justify-center z-10"
         style={{ borderColor: color }}
       >
         {isComputing ? (
@@ -200,17 +202,27 @@ function AgentCircle({
           icon
         )}
       </div>
-      <span className="mt-0.5 text-[9px] md:text-[11px] font-bold whitespace-nowrap" style={{ color }}>
+      <span className="mt-0.5 text-[8px] md:text-[10px] font-bold whitespace-nowrap" style={{ color }}>
         {label}
       </span>
       {sublabel && (
-        <span className="text-[7px] md:text-[9px] text-gray-400 whitespace-nowrap">{sublabel}</span>
+        <span className="text-[6px] md:text-[8px] text-gray-400 whitespace-nowrap">{sublabel}</span>
       )}
       {/* Thinking animation */}
       {isComputing && <ThinkingDots color={color} />}
     </div>
   );
 }
+
+// ============================================================
+// Environment colors
+// ============================================================
+
+const ENV_COLORS = {
+  A: "#34a853",
+  B: "#e37400",
+  C: "#7b1fa2",
+} as const;
 
 // ============================================================
 // Main FieldView
@@ -227,14 +239,19 @@ export default function FieldView({
   const isActive = phase !== "idle";
   const targetIsA = currentRequest?.target === "agent-A";
   const targetIsB = currentRequest?.target === "agent-B";
+  const targetIsC = currentRequest?.target === "agent-C";
   const isComputingA = phase === "local_computing" && targetIsA;
   const isComputingB = phase === "local_computing" && targetIsB;
+  const isComputingC = phase === "local_computing" && targetIsC;
   const isContactingA =
     phase === "contacting_a" ||
     ((phase === "authenticating" || phase === "authorizing") && targetIsA);
   const isContactingB =
     phase === "contacting_b" ||
     ((phase === "authenticating" || phase === "authorizing") && targetIsB);
+  const isContactingC =
+    phase === "contacting_c" ||
+    ((phase === "authenticating" || phase === "authorizing") && targetIsC);
 
   // Latest bubble per speaker
   const latestBubbles = useMemo(() => {
@@ -245,18 +262,24 @@ export default function FieldView({
     return Array.from(map.values());
   }, [bubbles]);
 
+  // Determine which env the policy bubble should appear near
+  const policyNearEnv = targetIsC ? "C" : targetIsB ? "B" : "A";
+  const policyX = policyNearEnv === "A" ? 32 : policyNearEnv === "B" ? 55 : 75;
+
   // Bubble positions (relative to graph %)
   const bubblePositions: Record<string, { x: number; y: number; tail: "bottom" | "top" | "left" | "right" }> = {
-    orchestrator: { x: orchestratorPos.x + 10, y: orchestratorPos.y - 6, tail: "bottom" },
-    "agent-a": { x: NODE.envA.x + 12, y: NODE.envA.y - 12, tail: "bottom" },
-    "agent-b": { x: NODE.envB.x - 12, y: NODE.envB.y - 12, tail: "bottom" },
-    platform: { x: 68, y: NODE.orchestratorHome.y - 4, tail: "left" },
-    policy: {
-      x: isContactingB || targetIsB ? 58 : 42,
-      y: 46,
-      tail: "bottom",
-    },
+    orchestrator: { x: orchestratorPos.x + 8, y: orchestratorPos.y - 6, tail: "bottom" },
+    "agent-a": { x: NODE.envA.x + 8, y: NODE.envA.y - 14, tail: "bottom" },
+    "agent-b": { x: NODE.envB.x + 8, y: NODE.envB.y - 14, tail: "bottom" },
+    "agent-c": { x: NODE.envC.x - 16, y: NODE.envC.y - 14, tail: "bottom" },
+    platform: { x: 66, y: NODE.orchestratorHome.y - 4, tail: "left" },
+    policy: { x: policyX, y: 44, tail: "bottom" },
   };
+
+  const resultColor = (env: string) =>
+    env === "A" ? "bg-green-50 border-green-200 text-green-700"
+    : env === "B" ? "bg-amber-50 border-amber-200 text-amber-700"
+    : "bg-purple-50 border-purple-200 text-purple-700";
 
   return (
     <div className="flex flex-col h-full w-full bg-gray-50/50">
@@ -273,7 +296,7 @@ export default function FieldView({
               y1={`${NODE.orchestratorHome.y + 8}%`}
               x2={`${NODE.envA.x}%`}
               y2={`${NODE.envA.y - 10}%`}
-              stroke={isContactingA || isComputingA ? "#34a853" : "#dadce0"}
+              stroke={isContactingA || isComputingA ? ENV_COLORS.A : "#dadce0"}
               strokeWidth={isContactingA || isComputingA ? "2.5" : "1.5"}
               strokeDasharray="8,6"
             />
@@ -283,14 +306,24 @@ export default function FieldView({
               y1={`${NODE.orchestratorHome.y + 8}%`}
               x2={`${NODE.envB.x}%`}
               y2={`${NODE.envB.y - 10}%`}
-              stroke={isContactingB || isComputingB ? "#e37400" : "#dadce0"}
+              stroke={isContactingB || isComputingB ? ENV_COLORS.B : "#dadce0"}
               strokeWidth={isContactingB || isComputingB ? "2.5" : "1.5"}
               strokeDasharray="8,6"
             />
+            {/* Home ↔ Env C */}
+            <line
+              x1={`${NODE.orchestratorHome.x}%`}
+              y1={`${NODE.orchestratorHome.y + 8}%`}
+              x2={`${NODE.envC.x}%`}
+              y2={`${NODE.envC.y - 10}%`}
+              stroke={isContactingC || isComputingC ? ENV_COLORS.C : "#dadce0"}
+              strokeWidth={isContactingC || isComputingC ? "2.5" : "1.5"}
+              strokeDasharray="8,6"
+            />
 
-            {/* Animated particle traveling along the active edge */}
+            {/* Animated particles traveling along the active edge */}
             {(isContactingA || isComputingA) && (
-              <circle r="4" fill="#34a853" opacity="0.6">
+              <circle r="4" fill={ENV_COLORS.A} opacity="0.6">
                 <animateMotion
                   dur="2s"
                   repeatCount="indefinite"
@@ -299,11 +332,20 @@ export default function FieldView({
               </circle>
             )}
             {(isContactingB || isComputingB) && (
-              <circle r="4" fill="#e37400" opacity="0.6">
+              <circle r="4" fill={ENV_COLORS.B} opacity="0.6">
                 <animateMotion
                   dur="2s"
                   repeatCount="indefinite"
                   path={`M${NODE.orchestratorHome.x * 5},${(NODE.orchestratorHome.y + 8) * 4} L${NODE.envB.x * 5},${(NODE.envB.y - 10) * 4}`}
+                />
+              </circle>
+            )}
+            {(isContactingC || isComputingC) && (
+              <circle r="4" fill={ENV_COLORS.C} opacity="0.6">
+                <animateMotion
+                  dur="2s"
+                  repeatCount="indefinite"
+                  path={`M${NODE.orchestratorHome.x * 5},${(NODE.orchestratorHome.y + 8) * 4} L${NODE.envC.x * 5},${(NODE.envC.y - 10) * 4}`}
                 />
               </circle>
             )}
@@ -312,27 +354,23 @@ export default function FieldView({
           {/* ===== Zone backgrounds ===== */}
 
           {/* Orchestrator home zone (top center) */}
-          <Zone x={NODE.orchestratorHome.x} y={NODE.orchestratorHome.y} width={38} height={22} color="#4285f4" borderStyle="solid">
+          <Zone x={NODE.orchestratorHome.x} y={NODE.orchestratorHome.y} width={42} height={20} color="#4285f4" borderStyle="solid">
             <div className="absolute top-1.5 left-0 right-0 flex justify-center">
-              <span className="text-[8px] md:text-[9px] font-semibold text-blue-500 uppercase tracking-wider">
+              <span className="text-[7px] md:text-[9px] font-semibold text-blue-500 uppercase tracking-wider">
                 Orchestrator Zone
               </span>
             </div>
             {/* Result cards displayed inside home zone */}
             {results.length > 0 && (
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+              <div className="absolute bottom-1.5 left-1 right-1 flex flex-wrap justify-center gap-1">
                 {results.map((r) => (
                   <motion.div
                     key={`${r.environment}-${r.label}`}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`px-2 py-0.5 rounded text-[8px] md:text-[10px] font-medium border ${
-                      r.environment === "A"
-                        ? "bg-green-50 border-green-200 text-green-700"
-                        : "bg-amber-50 border-amber-200 text-amber-700"
-                    }`}
+                    className={`px-1.5 py-0.5 rounded text-[7px] md:text-[9px] font-medium border ${resultColor(r.environment)}`}
                   >
-                    {r.environment}: {r.label}={r.value}
+                    {r.environment}:{r.label}={r.value}
                   </motion.div>
                 ))}
               </div>
@@ -340,26 +378,38 @@ export default function FieldView({
           </Zone>
 
           {/* Env A zone (bottom left) */}
-          <Zone x={NODE.envA.x} y={NODE.envA.y} width={36} height={36} color="#34a853">
+          <Zone x={NODE.envA.x} y={NODE.envA.y} width={28} height={36} color={ENV_COLORS.A}>
             <div className="absolute top-1.5 left-0 right-0 flex justify-center">
-              <span className="text-[8px] md:text-[9px] font-semibold text-green-600 uppercase tracking-wider">
-                Environment A
+              <span className="text-[7px] md:text-[8px] font-semibold text-green-600 uppercase tracking-wider">
+                Env A
               </span>
             </div>
-            <div className="absolute bottom-2 left-0 right-0 flex flex-col items-center gap-0.5">
-              <span className="inline-flex items-center gap-0.5 text-[7px] md:text-[8px] text-gray-400"><LockIcon size={10} /> Raw data remains local</span>
+            <div className="absolute bottom-1.5 left-0 right-0 flex flex-col items-center">
+              <span className="inline-flex items-center gap-0.5 text-[6px] md:text-[7px] text-gray-400"><LockIcon size={8} /> Local only</span>
             </div>
           </Zone>
 
-          {/* Env B zone (bottom right) */}
-          <Zone x={NODE.envB.x} y={NODE.envB.y} width={36} height={36} color="#e37400">
+          {/* Env B zone (bottom center) */}
+          <Zone x={NODE.envB.x} y={NODE.envB.y} width={28} height={36} color={ENV_COLORS.B}>
             <div className="absolute top-1.5 left-0 right-0 flex justify-center">
-              <span className="text-[8px] md:text-[9px] font-semibold text-amber-600 uppercase tracking-wider">
-                Environment B
+              <span className="text-[7px] md:text-[8px] font-semibold text-amber-600 uppercase tracking-wider">
+                Env B
               </span>
             </div>
-            <div className="absolute bottom-2 left-0 right-0 flex flex-col items-center gap-0.5">
-              <span className="inline-flex items-center gap-0.5 text-[7px] md:text-[8px] text-gray-400"><LockIcon size={10} /> Raw data remains local</span>
+            <div className="absolute bottom-1.5 left-0 right-0 flex flex-col items-center">
+              <span className="inline-flex items-center gap-0.5 text-[6px] md:text-[7px] text-gray-400"><LockIcon size={8} /> Local only</span>
+            </div>
+          </Zone>
+
+          {/* Env C zone (bottom right) */}
+          <Zone x={NODE.envC.x} y={NODE.envC.y} width={28} height={36} color={ENV_COLORS.C}>
+            <div className="absolute top-1.5 left-0 right-0 flex justify-center">
+              <span className="text-[7px] md:text-[8px] font-semibold text-purple-600 uppercase tracking-wider">
+                Env C
+              </span>
+            </div>
+            <div className="absolute bottom-1.5 left-0 right-0 flex flex-col items-center">
+              <span className="inline-flex items-center gap-0.5 text-[6px] md:text-[7px] text-gray-400"><LockIcon size={8} /> Local only</span>
             </div>
           </Zone>
 
@@ -375,15 +425,15 @@ export default function FieldView({
           >
             {isActive && (
               <motion.div
-                className="absolute w-14 h-14 md:w-16 md:h-16 rounded-full bg-blue-400/15"
+                className="absolute w-12 h-12 md:w-14 md:h-14 rounded-full bg-blue-400/15"
                 animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
                 transition={{ duration: 2.5, repeat: Infinity }}
               />
             )}
-            <div className="w-11 h-11 md:w-13 md:h-13 rounded-full bg-white border-2 border-blue-500 shadow-lg flex items-center justify-center z-10">
-              <OrchestratorIcon size={22} />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border-2 border-blue-500 shadow-lg flex items-center justify-center z-10">
+              <OrchestratorIcon size={20} />
             </div>
-            <span className="mt-0.5 text-[9px] md:text-[11px] font-bold text-blue-600 whitespace-nowrap">
+            <span className="mt-0.5 text-[8px] md:text-[10px] font-bold text-blue-600 whitespace-nowrap">
               Orchestrator
             </span>
           </motion.div>
@@ -401,14 +451,14 @@ export default function FieldView({
             }}
           >
             <AgentCircle
-              icon={<AgentIcon size={20} color="#34a853" />}
+              icon={<AgentIcon size={18} color={ENV_COLORS.A} />}
               label="Agent A"
               sublabel="代表エージェント"
-              color="#34a853"
+              color={ENV_COLORS.A}
               isActive={isContactingA || isComputingA}
               isComputing={isComputingA}
             />
-            <BallRow count={environmentAValues.length} color="#34a853" isComputing={isComputingA} />
+            <BallRow count={environmentAValues.length} color={ENV_COLORS.A} isComputing={isComputingA} />
           </div>
 
           {/* Agent B */}
@@ -422,14 +472,35 @@ export default function FieldView({
             }}
           >
             <AgentCircle
-              icon={<AgentIcon size={20} color="#e37400" />}
+              icon={<AgentIcon size={18} color={ENV_COLORS.B} />}
               label="Agent B"
               sublabel="代表エージェント"
-              color="#e37400"
+              color={ENV_COLORS.B}
               isActive={isContactingB || isComputingB}
               isComputing={isComputingB}
             />
-            <BallRow count={environmentBValues.length} color="#e37400" isComputing={isComputingB} />
+            <BallRow count={environmentBValues.length} color={ENV_COLORS.B} isComputing={isComputingB} />
+          </div>
+
+          {/* Agent C */}
+          <div
+            className="absolute flex flex-col items-center pointer-events-none"
+            style={{
+              left: `${NODE.envC.x}%`,
+              top: `${NODE.envC.y}%`,
+              transform: "translate(-50%, -50%)",
+              zIndex: 10,
+            }}
+          >
+            <AgentCircle
+              icon={<AgentIcon size={18} color={ENV_COLORS.C} />}
+              label="Agent C"
+              sublabel="代表エージェント"
+              color={ENV_COLORS.C}
+              isActive={isContactingC || isComputingC}
+              isComputing={isComputingC}
+            />
+            <BallRow count={environmentCValues.length} color={ENV_COLORS.C} isComputing={isComputingC} />
           </div>
 
           {/* ===== Speech bubbles ===== */}
@@ -465,7 +536,7 @@ export default function FieldView({
                 style={{
                   right: 8,
                   top: 8,
-                  width: "min(220px, 45%)",
+                  width: "min(200px, 40%)",
                 }}
               >
                 <div
@@ -516,9 +587,9 @@ export default function FieldView({
             )}
           </AnimatePresence>
 
-          {/* Annotation — bottom right, out of the way */}
-          <div className="absolute bottom-2 right-3 z-10 text-[7px] md:text-[8px] text-gray-300 text-right">
-            <span className="inline-flex items-center gap-0.5"><StatsIcon size={10} /> 統計情報のみ返却</span>
+          {/* Annotation — bottom right */}
+          <div className="absolute bottom-2 right-3 z-10 text-[6px] md:text-[7px] text-gray-300 text-right">
+            <span className="inline-flex items-center gap-0.5"><StatsIcon size={8} /> 統計情報のみ返却</span>
           </div>
         </div>
       </div>

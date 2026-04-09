@@ -11,6 +11,7 @@ export type AppPhase =
   | "authorizing"
   | "contacting_a"
   | "contacting_b"
+  | "contacting_c"
   | "local_computing"
   | "evaluating"
   | "completed"
@@ -26,6 +27,7 @@ export const PHASE_LABELS: Record<AppPhase, string> = {
   authorizing: "認可判定中",
   contacting_a: "Aへ問い合わせ中",
   contacting_b: "Bへ問い合わせ中",
+  contacting_c: "Cへ問い合わせ中",
   local_computing: "ローカル計算中",
   evaluating: "評価中",
   completed: "完了",
@@ -83,7 +85,7 @@ export interface ChatMessage {
 
 /** Statistical result returned by an environment agent */
 export interface StatResult {
-  environment: "A" | "B";
+  environment: "A" | "B" | "C";
   label: string;
   value: number;
 }
@@ -107,6 +109,7 @@ export type BubbleSpeaker =
   | "orchestrator"
   | "agent-a"
   | "agent-b"
+  | "agent-c"
   | "platform"
   | "policy";
 
@@ -130,5 +133,5 @@ export interface OrchestrationStep {
   secureRequest?: SecureRequest;
   authSteps?: AuthStep[];
   statResult?: StatResult;
-  orchestratorTarget?: "center" | "A" | "B" | "pf";
+  orchestratorTarget?: "center" | "A" | "B" | "C" | "pf";
 }

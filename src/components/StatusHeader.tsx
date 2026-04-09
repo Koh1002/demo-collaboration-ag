@@ -15,6 +15,7 @@ const phaseColor: Record<string, string> = {
   authorizing: "bg-yellow-50 text-yellow-700",
   contacting_a: "bg-green-50 text-green-700",
   contacting_b: "bg-amber-50 text-amber-700",
+  contacting_c: "bg-purple-50 text-purple-700",
   local_computing: "bg-indigo-50 text-indigo-700",
   evaluating: "bg-blue-50 text-blue-700",
   completed: "bg-green-50 text-green-700",
