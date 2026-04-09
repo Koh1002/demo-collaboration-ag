@@ -93,6 +93,8 @@ function buildEnvContactSteps(
       logType: "info",
       speaker: "orchestrator",
       orchestratorTarget: env,
+      secureRequest: request,
+      authSteps: [],
     },
     {
       phase: "authenticating",
@@ -305,6 +307,8 @@ function buildConditionalSteps(): OrchestrationStep[] {
         logType: "info",
         speaker: "orchestrator",
         orchestratorTarget: env,
+        secureRequest: request,
+        authSteps: [],
       },
       {
         phase: "authenticating",
