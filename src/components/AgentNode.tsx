@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { AgentIcon } from "./Icons";
 
 interface AgentNodeProps {
   label: string;
@@ -45,7 +46,7 @@ export default function AgentNode({
       <div
         className={`w-12 h-12 rounded-full bg-white border-2 ${c.border} shadow-md flex items-center justify-center`}
       >
-        <span className="text-base">🛡️</span>
+        <AgentIcon size={24} color={color === "green" ? "#34a853" : "#f29900"} />
       </div>
       <span className={`mt-1 text-[10px] font-bold ${c.text}`}>{label}</span>
       <span className="text-[9px] text-gray-400">{envLabel}</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { OrchestratorIcon } from "./Icons";
 
 interface OrchestratorNodeProps {
   x: number;
@@ -31,7 +32,7 @@ export default function OrchestratorNode({
       )}
       <div className="w-16 h-16 rounded-full bg-white border-2 border-blue-400 shadow-lg flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg">🤖</div>
+          <OrchestratorIcon size={24} />
           <div className="text-[8px] font-bold text-blue-600 leading-tight">
             Orchestrator
           </div>

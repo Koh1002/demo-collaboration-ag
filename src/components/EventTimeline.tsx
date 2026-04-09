@@ -19,10 +19,10 @@ const typeStyles: Record<EventLogEntry["type"], string> = {
 
 const typeIcons: Record<EventLogEntry["type"], string> = {
   info: "○",
-  auth: "🔐",
+  auth: "◈",
   policy_allow: "✓",
   policy_deny: "✗",
-  result: "📊",
+  result: "▣",
   error: "⚠",
 };
 
