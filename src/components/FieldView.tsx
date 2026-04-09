@@ -484,7 +484,11 @@ export default function FieldView({
                           s.done ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
                         }`}
                       >
-                        {s.done ? "✓" : "○"} {s.label}
+                        {s.done ? (
+                          <svg width="8" height="8" viewBox="0 0 16 16" className="inline-block flex-shrink-0"><polyline points="3,8 7,12 13,4" stroke="#15803d" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        ) : (
+                          <svg width="8" height="8" viewBox="0 0 16 16" className="inline-block flex-shrink-0"><circle cx="8" cy="8" r="5" stroke="#9ca3af" strokeWidth="1.5" fill="none"/></svg>
+                        )} {s.label}
                       </span>
                     ))}
                   </div>
