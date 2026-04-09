@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage, AppPhase } from "@/lib/types";
 import ScenarioButtons from "./ScenarioButtons";
+import { OrchestratorIcon } from "./Icons";
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -63,8 +64,8 @@ export default function ChatPanel({
       <div className="flex-1 min-h-0 overflow-y-auto chat-scroll px-4 md:px-5 py-3 md:py-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-blue-100 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4285f4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center">
+              <OrchestratorIcon size={22} />
             </div>
             <p className="text-sm text-gray-500 mb-1">
               マルチエージェントオーケストレーターです

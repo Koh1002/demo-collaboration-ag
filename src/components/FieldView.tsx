@@ -22,15 +22,15 @@ import { OrchestratorIcon, AgentIcon, LockIcon, StatsIcon } from "./Icons";
 /** Fixed positions — edges always connect these points */
 const NODE = {
   orchestratorHome: { x: 50, y: 18 },  // Orchestrator's home zone (top center)
-  envA:             { x: 24, y: 76 },   // Environment A zone (bottom left)
-  envB:             { x: 76, y: 76 },   // Environment B zone (bottom right)
+  envA:             { x: 28, y: 76 },   // Environment A zone (bottom left)
+  envB:             { x: 72, y: 76 },   // Environment B zone (bottom right)
 } as const;
 
 /** Where the orchestrator moves to for each target */
 function getOrchestratorPos(target: string): { x: number; y: number } {
   switch (target) {
-    case "A":  return { x: 30, y: 56 };   // near Env A
-    case "B":  return { x: 70, y: 56 };   // near Env B
+    case "A":  return { x: 33, y: 56 };   // near Env A
+    case "B":  return { x: 67, y: 56 };   // near Env B
     case "pf": return { x: 50, y: 25 };   // near home (evaluating)
     default:   return NODE.orchestratorHome; // home
   }
@@ -263,7 +263,7 @@ export default function FieldView({
       <StatusHeader phase={phase} />
 
       <div className="flex-1 relative p-2 md:p-4 overflow-hidden w-full">
-        <div className="absolute inset-2 md:inset-4 rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="absolute inset-2 md:inset-4 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
 
           {/* ===== STATIC SVG edges (background paths — never move) ===== */}
           <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
@@ -340,7 +340,7 @@ export default function FieldView({
           </Zone>
 
           {/* Env A zone (bottom left) */}
-          <Zone x={NODE.envA.x} y={NODE.envA.y} width={38} height={36} color="#34a853">
+          <Zone x={NODE.envA.x} y={NODE.envA.y} width={36} height={36} color="#34a853">
             <div className="absolute top-1.5 left-0 right-0 flex justify-center">
               <span className="text-[8px] md:text-[9px] font-semibold text-green-600 uppercase tracking-wider">
                 Environment A
@@ -352,7 +352,7 @@ export default function FieldView({
           </Zone>
 
           {/* Env B zone (bottom right) */}
-          <Zone x={NODE.envB.x} y={NODE.envB.y} width={38} height={36} color="#e37400">
+          <Zone x={NODE.envB.x} y={NODE.envB.y} width={36} height={36} color="#e37400">
             <div className="absolute top-1.5 left-0 right-0 flex justify-center">
               <span className="text-[8px] md:text-[9px] font-semibold text-amber-600 uppercase tracking-wider">
                 Environment B
